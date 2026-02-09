@@ -7,7 +7,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
+
 import java.util.List;
 
 
@@ -19,22 +19,22 @@ public class ProductController {
     private ProductService service;
 
     @GetMapping("/create")
-    public String create(Model model) {
+    public String createProductPage(Model model) {
         Product product = new Product();
         model.addAttribute("product", product);
-        return "product/create";
+        return "CreateProduct";
     }
 
-    @PostMapping
-    public String createProduct(@ModelAttribute  Product product, Model model) {
+    @PostMapping("/create")
+    public String createProductPost(@ModelAttribute  Product product, Model model) {
         service.create(product);
         return "redirect:list";
     }
 
     @GetMapping("/list")
     public String productListPage(Model model) {
-        List<Product> allProducts  = new ArrayList<>();
+        List<Product> allProducts  = service.findAll();
         model.addAttribute("products", allProducts);
-        return "productlist";
+        return "ProductList";
     }
 }
