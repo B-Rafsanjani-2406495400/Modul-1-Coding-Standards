@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class ProductTest {
 
     Product product;
+
     @BeforeEach
     void setUp() {
         this.product = new Product();
@@ -18,16 +19,30 @@ class ProductTest {
 
     @Test
     void testGetProductId() {
+
         assertEquals("eb558e9f-1c39-460e-8860-71af6af63bd6", this.product.getProductId());
     }
 
     @Test
     void testGetProductName() {
+
         assertEquals("Sampo Cap Bambang", this.product.getProductName());
     }
 
     @Test
     void testGetProductQuantity() {
         assertEquals(100, this.product.getProductQuantity());
+    }
+
+    @Test
+    void testSetProductQuantityNegative() {
+        this.product.setProductQuantity(-1);
+        assertEquals(-1, this.product.getProductQuantity());
+    }
+
+    @Test
+    void testSetProductNameNull(){
+        this.product.setProductName(null);
+        assertNull(this.product.getProductName());
     }
 }

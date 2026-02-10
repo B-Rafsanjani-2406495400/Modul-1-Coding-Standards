@@ -32,13 +32,14 @@ public class ProductRepository {
         return null;
     }
 
-    public void edit(String id, Product product) {
-        Product product_old = findById(id);
-        Iterator<Product> iterator = productData.iterator();
-        if (id.equals(product.getProductId())) {
+    public Product edit(Product product) {
+        Product product_old = findById(product.getProductId());
+        if (product_old!=null) {
             product_old.setProductName(product.getProductName());
             product_old.setProductQuantity(product.getProductQuantity());
+            return product_old;
         }
+        return null;
     }
 
     public void delete(String id) {
