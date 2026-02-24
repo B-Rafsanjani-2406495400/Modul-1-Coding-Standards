@@ -1,0 +1,29 @@
+name: Build and SonarCloud
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: gradle
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Build, Test, and Analyze
+        run: ./gradlew clean build jacocoTestReport sonarqube --info
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
