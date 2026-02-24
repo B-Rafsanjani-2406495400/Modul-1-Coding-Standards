@@ -1,13 +1,14 @@
 package id.ac.ui.cs.advprog.eshop;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
 class EshopApplicationTests {
 
     @Test
-    void contextLoads() {
+    void main_shouldRunWithNonWebApplicationType() {
+        EshopApplication.main(new String[] {
+                "--spring.main.web-application-type=none",
+                "--spring.main.banner-mode=off"
+        });
     }
-
 }
