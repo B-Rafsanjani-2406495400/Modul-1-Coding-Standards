@@ -19,7 +19,7 @@ class ProductRepositoryTest {
     ProductRepository productRepository;
     @BeforeEach
     void setUp() {
-
+    //initialize empty because there is already an InjectMocks
     }
 
     @Test
