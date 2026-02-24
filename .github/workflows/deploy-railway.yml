@@ -23,4 +23,5 @@ jobs:
         run: |
           railway up --ci \
             --project "${{ secrets.RAILWAY_PROJECT_ID }}" \
-            --environment "${{ secrets.RAILWAY_ENVIRONMENT }}"
+            --environment "${{ secrets.RAILWAY_ENVIRONMENT }}" \
+            --service "${{ secrets.RAILWAY_SERVICE }}"
