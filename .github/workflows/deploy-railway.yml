@@ -7,7 +7,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: production
     steps:
       - uses: actions/checkout@v4
 
@@ -15,7 +14,8 @@ jobs:
         with:
           node-version: "20"
 
-      - run: npm i -g @railway/cli
+      - name: Install Railway CLI
+        run: npm i -g @railway/cli
 
       - name: Deploy
         env:
