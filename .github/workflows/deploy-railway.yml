@@ -1,0 +1,29 @@
+name: Deploy to Railway
+
+on:
+  push:
+    branches: [ "main", "master" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node (for Railway CLI)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Railway CLI
+        run: npm i -g @railway/cli
+        # install via npm adalah cara resmi yang umum dipakai :contentReference[oaicite:9]{index=9}
+
+      - name: Deploy
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway up --ci \
+            --project "${{ secrets.RAILWAY_PROJECT_ID }}" \
+            --environment "${{ secrets.RAILWAY_ENVIRONMENT }}" \
+            --service "${{ secrets.RAILWAY_SERVICE }}"

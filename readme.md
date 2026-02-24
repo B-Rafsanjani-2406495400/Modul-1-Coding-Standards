@@ -75,3 +75,40 @@ Tidak ada angka pasti, namun prinsipnya adalah setiap *branch* logika (if/else),
 Ketika membuat functional test baru untuk fitur lain, saya menyadari kode test saya menjadi tidak bersih karena banyak duplikasi (copy-paste) dari test sebelumnya.
 * **Masalah:** Setup server, inisialisasi driver, dan definisi URL dasar diulang-ulang.
 * **Solusi:** Seharusnya saya membuat **Base Test Class** yang menangani setup (`@BeforeEach`) dan teardown driver. Test class lain cukup melakukan *extends* ke kelas base tersebut. Ini akan membuat kode test lebih bersih dan mudah dipelihara.
+
+# Reflection Module 2: CI/CD, Code Quality, and Deployment
+
+## 1. Code Quality Issue(s) Fixed & Strategy
+
+Selama exercise Module 2, saya menemukan beberapa *code quality issues* dari hasil analisis (SonarCloud) dan memperbaikinya dengan strategi **minimal changes, maximum impact**—yaitu memperbaiki isu yang jelas berdampak pada kualitas dan maintainability tanpa mengubah perilaku aplikasi.
+
+### A. Empty Method / Empty Test Body
+Beberapa method pada test terdeteksi sebagai “kosong” atau tidak memiliki aksi yang jelas (misalnya `setUp()` yang kosong, atau test yang hanya menjalankan kode tanpa verifikasi). Hal ini menurunkan kualitas test karena tidak ada bukti bahwa perilaku benar-benar diverifikasi.
+
+**Strategi perbaikan:**
+- Untuk lifecycle method seperti `setUp()`, saya memastikan method ini benar-benar melakukan inisialisasi yang diperlukan (misalnya membuat instance repository untuk tiap test agar test terisolasi).
+- Untuk test case yang hanya menjalankan method tanpa verifikasi, saya menambahkan assertion seperti `assertDoesNotThrow(...)` atau `assertNotNull(...)` agar test memiliki tujuan yang jelas.
+
+### B. Missing Assertion in Test Case
+Sonar menandai test yang tidak memiliki assertion karena test semacam ini bisa “selalu hijau” walau sebenarnya tidak memverifikasi apa pun.
+
+**Strategi perbaikan:**
+- Saya menambahkan assertion yang relevan dan aman, misalnya `assertDoesNotThrow` untuk memastikan aplikasi dapat dijalankan tanpa exception dalam mode non-web.
+- Untuk test Spring context, saya menggunakan injection `ApplicationContext` lalu melakukan `assertNotNull(context)` untuk membuktikan context benar-benar terbentuk.
+
+### C. Unused Imports / Minor Cleanliness Issues
+Ada import yang tidak digunakan pada beberapa test class (contohnya pada test controller). Meski bukan bug, ini mengganggu readability dan sering dianggap “noise” pada code review.
+
+**Strategi perbaikan:**
+- Saya membersihkan import yang tidak terpakai agar kode lebih rapi dan sesuai standar clean code.
+- Saya memisahkan tiap fix ke commit yang independen agar histori perubahan mudah ditinjau dan sesuai instruksi modul.
+
+---
+
+## 2. Reflection on CI/CD Workflows: Does It Meet CI & CD?
+
+Menurut saya, workflow yang saya implementasikan **sudah memenuhi definisi Continuous Integration (CI)** karena setiap ada `push` atau `pull_request`, pipeline akan otomatis menjalankan proses build dan testing (termasuk JaCoCo dan analisis kualitas kode). Dengan demikian, integrasi perubahan dari berbagai branch selalu divalidasi secara otomatis, sehingga masalah dapat terdeteksi lebih awal sebelum merge ke branch utama.
+
+Untuk **Continuous Deployment (CD)**, implementasi saya juga **mendekati/termasuk CD** karena setelah perubahan masuk ke `main/master`, workflow deploy akan berjalan otomatis dan menerapkan versi terbaru ke environment PaaS tanpa proses manual. Ini berarti rilis ke environment deployment terjadi secara kontinu berbasis event (push/merge) dan bukan berdasarkan langkah manual developer.
+
+Namun, kualitas CD sangat bergantung pada aturan trigger yang dipakai. Jika deploy diatur untuk berjalan **hanya ketika workflow CI sukses**, maka alurnya lebih ideal karena memastikan aplikasi yang dideploy sudah lolos pengujian dan quality gate. Dengan demikian, pipeline saya bukan hanya otomatis, tetapi juga konsisten menjaga kualitas sebelum deployment dilakukan.
