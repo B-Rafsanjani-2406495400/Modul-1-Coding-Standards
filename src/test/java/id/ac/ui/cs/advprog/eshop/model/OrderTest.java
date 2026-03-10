@@ -52,7 +52,7 @@ class OrderTest {
         assertEquals("1c5a3555-8b12-407f-bf56-fa6b1391d97f", order.getId());
         assertEquals(1708560000L, order.getOrderTime());
         assertEquals("Maman Surahman", order.getAuthor());
-        assertEquals("WAITING_PAYMENT", order.getStatus());
+        assertEquals(OrderStatus.WAITING_PAYMENT.name(), order.getStatus());
     }
 
     @Test
@@ -60,7 +60,7 @@ class OrderTest {
         Order order = new Order("1c5a3555-8b12-407f-bf56-fa6b1391d97f",
                 this.products, 1708560000L, "Maman Surahman", "SUCCESS");
 
-        assertEquals("SUCCESS", order.getStatus());
+        assertEquals(OrderStatus.SUCCESS.name(), order.getStatus());
     }
 
     @Test
@@ -76,7 +76,7 @@ class OrderTest {
         Order order = new Order("1c5a3555-8b12-407f-bf56-fa6b1391d97f",
                 this.products, 1708560000L, "Maman Surahman");
         order.setStatus("CANCELLED");
-        assertEquals("CANCELLED", order.getStatus());
+        assertEquals(OrderStatus.CANCELLED.name(), order.getStatus());
     }
 
     @Test
