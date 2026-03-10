@@ -176,3 +176,103 @@ Jika SOLID tidak diterapkan, dampaknya pada project biasanya terasa saat fitur b
 
 - **Inheritance yang tidak tepat membuat perilaku tidak konsisten (melanggar LSP)**  
   Misalnya `CarController extends ProductController`: secara desain, car bukan substitusi product controller. Ini dapat membuat developer bingung dan menimbulkan bug karena asumsi yang tidak valid tentang perilaku class turunan.
+
+## Module 4: Refactoring and TDD
+
+### Reflection 1
+
+#### 1. Reflection on TDD Flow Based on Percival (2017)
+
+Setelah mengerjakan Tutorial **Order** dan Exercise **Payment** dengan alur **TDD (RED → GREEN → REFACTOR)**, saya merasa bahwa flow ini **cukup berguna dan efektif** untuk saya, terutama untuk fitur yang memiliki aturan bisnis yang jelas seperti validasi status order, penyimpanan repository, dan aturan payment berdasarkan method.
+
+Selama pengerjaan, saya merasakan beberapa manfaat nyata dari TDD:
+
+- **Membantu memecah masalah besar menjadi langkah kecil**  
+  Saat mengerjakan `Order`, saya tidak langsung menulis seluruh implementasi sekaligus. Saya mulai dari test paling kecil, misalnya default status order, validasi empty products, lalu baru berlanjut ke repository dan service. Pendekatan ini membuat saya lebih fokus pada satu perilaku dalam satu waktu.
+
+- **Memberi umpan balik cepat saat ada kesalahan desain**  
+  Contoh paling jelas terjadi saat `OrderRepository` dan `PaymentRepository` belum terdaftar sebagai bean Spring. Unit test tertentu bisa saja lolos, tetapi full test (`./gradlew test`) gagal karena application context tidak bisa membuat dependency. Dari situ saya belajar bahwa test tidak hanya membantu memverifikasi business logic, tetapi juga membantu menemukan masalah integrasi desain.
+
+- **Membuat refactoring lebih aman**  
+  Saat saya mengubah `Order` agar menggunakan `OrderStatus` enum, dan saat saya merapikan `Payment` dengan `PaymentMethod` serta `PaymentStatus`, saya bisa melakukan perubahan dengan lebih percaya diri karena sudah ada test yang menjaga perilaku eksternal tetap sama. Hal yang sama juga terjadi saat saya memecah validasi payment ke validator/strategy class saat refactor service.
+
+- **Mendorong desain yang lebih modular**  
+  Pada bagian Payment, awalnya validasi voucher, COD, dan bank transfer cenderung menumpuk di service. Karena test sudah ada, saya bisa melihat bahwa design tersebut berpotensi menjadi panjang dan sulit dirawat. Dari situ saya melakukan refactor dengan memisahkan validasi ke class validator terpisah. Ini membuat kode lebih dekat ke prinsip SRP dan OCP.
+
+Namun, saya juga menyadari bahwa flow TDD saya **belum sepenuhnya ideal** dan masih ada hal yang perlu diperbaiki:
+
+- **Kadang saya masih berpikir implementasi dulu, baru test menyusul**  
+  Secara teori saya mengikuti urutan RED → GREEN → REFACTOR, tetapi dalam praktiknya ada beberapa momen ketika saya sudah punya gambaran implementasi besar di kepala, lalu test yang ditulis menjadi sekadar formalitas untuk “mengejar” implementasi itu. Ini berarti saya belum sepenuhnya membiarkan test menjadi pendorong desain.
+
+- **Scope test kadang terlalu besar di awal**  
+  Terutama pada Payment Service, ada kecenderungan untuk langsung menguji banyak aturan sekaligus. Padahal akan lebih baik jika saya benar-benar menulis test kecil satu per satu: valid voucher dulu, lalu invalid voucher, lalu method lain, lalu retrieval methods.
+
+- **Saya masih menemukan friction saat refactor constructor/dependency**  
+  Misalnya setelah `PaymentServiceImpl` direfactor agar memakai validator list, test lama menjadi `NullPointerException` karena dependency test belum disesuaikan. Ini menunjukkan bahwa saya masih perlu lebih disiplin menjaga keselarasan antara design refactor dan test setup.
+
+#### 2. Things I Need to Improve Next Time
+
+Jika ke depan saya menulis lebih banyak test dengan TDD, ada beberapa hal yang perlu saya lakukan agar alurnya lebih baik:
+
+- **Menulis test yang lebih kecil dan lebih spesifik**  
+  Saya perlu memastikan setiap test hanya memverifikasi satu behavior yang jelas. Dengan begitu, saat test gagal, penyebabnya lebih mudah dilacak.
+
+- **Benar-benar berhenti di fase GREEN setelah minimum implementation**  
+  Kadang ada godaan untuk langsung “sekalian merapikan” atau menambahkan logic tambahan di fase GREEN. Ke depan, saya harus lebih disiplin: cukup buat test hijau dulu, baru lakukan perapihan di fase REFACTOR.
+
+- **Memastikan refactor tetap behavior-preserving**  
+  Saat memindahkan logic ke enum, validator, atau helper class, saya perlu memastikan semua perubahan tetap didorong oleh test yang sudah ada, bukan berdasarkan asumsi.
+
+- **Meningkatkan coverage edge cases**  
+  Untuk Payment terutama, saya bisa menambah test untuk kombinasi data yang lebih ekstrem, misalnya `null`, empty string, unsupported method, atau format voucher yang hampir valid tetapi tetap salah.
+
+Secara keseluruhan, saya menilai TDD **berguna** untuk saya karena membantu menjaga kualitas kode, memecah pekerjaan menjadi lebih terstruktur, dan membuat refactoring terasa lebih aman. Namun, agar lebih efektif, saya masih perlu meningkatkan disiplin dalam menjaga test tetap kecil, fokus, dan benar-benar menjadi pendorong desain.
+
+---
+
+### Reflection 2: F.I.R.S.T. Principle in My Unit Tests
+
+#### 1. Evaluation of Whether My Tests Follow F.I.R.S.T.
+
+Setelah melihat kembali unit test yang saya buat pada Tutorial dan Exercise, saya menilai bahwa test saya **sudah cukup mengikuti prinsip F.I.R.S.T.**, tetapi belum sempurna. Berikut refleksi saya untuk masing-masing prinsip:
+
+- **Fast**  
+  Secara umum, unit test saya cukup cepat karena mayoritas test hanya menguji model, repository in-memory, dan service dengan mock/dependency sederhana. Test seperti `OrderTest`, `OrderRepositoryTest`, `PaymentTest`, dan `PaymentRepositoryTest` tidak membutuhkan database eksternal maupun network call.  
+  Namun, saat menjalankan seluruh suite, ada juga test yang memuat Spring context, sehingga keseluruhan build menjadi lebih berat dibanding unit test murni. Artinya, unit test saya sendiri sudah relatif cepat, tetapi suite project secara total belum sepenuhnya “fast” jika dilihat dari seluruh test aplikasi.
+
+- **Independent**  
+  Sebagian besar test saya sudah independen karena setiap test membuat data sendiri melalui `@BeforeEach` atau local setup. Misalnya, pada test Order dan Payment, saya selalu membuat object baru sehingga satu test tidak bergantung pada hasil test lain.  
+  Ini penting terutama untuk repository in-memory, karena tanpa reset atau setup ulang, data dari test sebelumnya bisa mempengaruhi test berikutnya. Saya sudah menghindari itu dengan membuat instance repository baru di setiap `setUp()`.
+
+- **Repeatable**  
+  Test saya pada dasarnya repeatable karena tidak bergantung pada database, waktu sistem real-time, atau layanan eksternal. Walaupun beberapa object dibuat dengan UUID saat implementasi service, assertion yang saya tulis tidak bergantung pada nilai UUID persis, sehingga hasil test tetap konsisten.  
+  Saya juga tidak menggunakan data acak yang tidak terkontrol di unit test, jadi test bisa diulang dengan hasil yang sama.
+
+- **Self-validating**  
+  Ini adalah bagian yang menurut saya sudah cukup baik. Test saya menggunakan assertion yang jelas seperti `assertEquals`, `assertThrows`, `assertNull`, `assertNotNull`, dan verifikasi mock seperti `verify(...)`.  
+  Dengan begitu, test secara otomatis memberi tahu apakah behavior benar atau salah tanpa perlu inspeksi manual. Misalnya, test status payment langsung memverifikasi apakah order ikut berubah ke `SUCCESS` atau `FAILED`.
+
+- **Timely**  
+  Saya berusaha mengikuti prinsip ini dengan menulis test sebelum implementasi pada tutorial Order dan sebagian besar exercise Payment. Pada kasus Order, pola ini cukup terasa: test dibuat dulu, lalu skeleton, lalu implementation, lalu refactor.  
+  Namun pada Payment, saya akui ada beberapa momen di mana saya sudah punya gambaran implementasi duluan sebelum semua test benar-benar matang. Jadi prinsip “Timely” sudah diterapkan, tetapi belum selalu konsisten secara ideal.
+
+#### 2. What Still Needs Improvement
+
+Walaupun test saya sudah cukup dekat dengan F.I.R.S.T., masih ada beberapa kekurangan yang perlu saya perbaiki ke depan:
+
+- **Fast:**  
+  Saya perlu lebih jelas membedakan unit test murni dengan integration/context test. Unit test sebaiknya tetap ringan, sedangkan test yang memuat Spring context tidak perlu terlalu sering dijalankan saat iterasi kecil.
+
+- **Independent:**  
+  Saya harus terus memastikan repository in-memory atau shared objects tidak pernah dipakai lintas test tanpa reset. Ini sudah cukup baik sekarang, tetapi tetap perlu dijaga saat test suite makin besar.
+
+- **Repeatable:**  
+  Ke depan saya perlu menghindari asumsi yang terlalu bergantung pada urutan data atau efek samping dari mutable object, terutama jika nanti test controller/UI ditambahkan.
+
+- **Self-validating:**  
+  Saya bisa membuat assertion lebih spesifik lagi. Misalnya, bukan hanya memeriksa bahwa object tidak null, tetapi juga memastikan semua field penting dan perubahan status benar-benar sesuai aturan bisnis.
+
+- **Timely:**  
+  Ini yang paling perlu saya tingkatkan. Ke depan saya harus lebih konsisten menulis test sebelum implementation, bukan setelah saya terlalu jauh memikirkan desain kode.
+
+Secara keseluruhan, saya menilai test yang saya buat **cukup mengikuti F.I.R.S.T. principle**, terutama pada aspek **Independent, Repeatable, dan Self-validating**. Namun saya masih perlu memperbaiki disiplin pada aspek **Timely** dan menjaga agar test tetap ringan (**Fast**) saat project semakin berkembang.
