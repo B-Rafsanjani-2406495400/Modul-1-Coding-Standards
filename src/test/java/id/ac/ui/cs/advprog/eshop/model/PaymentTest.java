@@ -27,14 +27,14 @@ class PaymentTest {
         Payment payment = new Payment(
                 "payment-1",
                 order,
-                "VOUCHER_CODE",
+                PaymentMethod.VOUCHER_CODE.name(),
                 Map.of("voucherCode", "ESHOP1234ABC5678")
         );
 
         assertEquals("payment-1", payment.getId());
         assertEquals(order, payment.getOrder());
-        assertEquals("VOUCHER_CODE", payment.getMethod());
-        assertEquals("PENDING", payment.getStatus());
+        assertEquals(PaymentMethod.VOUCHER_CODE.name(), payment.getMethod());
+        assertEquals(PaymentStatus.PENDING.name(), payment.getStatus());
     }
 
     @Test
@@ -42,14 +42,14 @@ class PaymentTest {
         Payment payment = new Payment(
                 "payment-1",
                 order,
-                "VOUCHER_CODE",
+                PaymentMethod.VOUCHER_CODE.name(),
                 Map.of("voucherCode", "ESHOP1234ABC5678")
         );
 
-        payment.setStatus("SUCCESS");
+        payment.setStatus(PaymentStatus.SUCCESS.name());
 
-        assertEquals("SUCCESS", payment.getStatus());
-        assertEquals("SUCCESS", order.getStatus());
+        assertEquals(PaymentStatus.SUCCESS.name(), payment.getStatus());
+        assertEquals(OrderStatus.SUCCESS.name(), order.getStatus());
     }
 
     @Test
@@ -57,14 +57,14 @@ class PaymentTest {
         Payment payment = new Payment(
                 "payment-1",
                 order,
-                "VOUCHER_CODE",
+                PaymentMethod.VOUCHER_CODE.name(),
                 Map.of("voucherCode", "INVALID")
         );
 
-        payment.setStatus("REJECTED");
+        payment.setStatus(PaymentStatus.REJECTED.name());
 
-        assertEquals("REJECTED", payment.getStatus());
-        assertEquals("FAILED", order.getStatus());
+        assertEquals(PaymentStatus.REJECTED.name(), payment.getStatus());
+        assertEquals(OrderStatus.FAILED.name(), order.getStatus());
     }
 
     @Test
@@ -75,5 +75,17 @@ class PaymentTest {
                 "CRYPTO",
                 Map.of()
         ));
+    }
+
+    @Test
+    void testSetStatusWithInvalidStatusShouldThrowException() {
+        Payment payment = new Payment(
+                "payment-1",
+                order,
+                PaymentMethod.VOUCHER_CODE.name(),
+                Map.of("voucherCode", "ESHOP1234ABC5678")
+        );
+
+        assertThrows(IllegalArgumentException.class, () -> payment.setStatus("INVALID"));
     }
 }
