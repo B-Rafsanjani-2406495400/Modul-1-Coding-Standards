@@ -22,6 +22,7 @@ public class PaymentServiceImpl implements PaymentService {
     public PaymentServiceImpl(PaymentRepository paymentRepository,
                               List<PaymentDataValidator> paymentDataValidators) {
         this.paymentRepository = paymentRepository;
+
         this.paymentDataValidators = paymentDataValidators;
     }
 

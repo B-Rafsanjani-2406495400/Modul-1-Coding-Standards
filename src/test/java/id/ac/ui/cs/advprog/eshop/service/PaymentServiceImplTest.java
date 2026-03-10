@@ -7,10 +7,12 @@ import id.ac.ui.cs.advprog.eshop.model.PaymentMethod;
 import id.ac.ui.cs.advprog.eshop.model.PaymentStatus;
 import id.ac.ui.cs.advprog.eshop.model.Product;
 import id.ac.ui.cs.advprog.eshop.repository.PaymentRepository;
+import id.ac.ui.cs.advprog.eshop.service.payment.BankTransferValidator;
+import id.ac.ui.cs.advprog.eshop.service.payment.PaymentDataValidator;
+import id.ac.ui.cs.advprog.eshop.service.payment.VoucherCodeValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -18,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -26,9 +29,7 @@ class PaymentServiceImplTest {
     @Mock
     private PaymentRepository paymentRepository;
 
-    @InjectMocks
     private PaymentServiceImpl paymentService;
-
     private Order order;
 
     @BeforeEach
@@ -39,6 +40,13 @@ class PaymentServiceImplTest {
         product.setProductQuantity(1);
 
         order = new Order("order-1", List.of(product), 1708560000L, "Rafsan");
+
+        List<PaymentDataValidator> validators = List.of(
+                new VoucherCodeValidator(),
+                new BankTransferValidator()
+        );
+
+        paymentService = new PaymentServiceImpl(paymentRepository, validators);
     }
 
     @Test
@@ -71,6 +79,44 @@ class PaymentServiceImplTest {
         assertNotNull(payment);
         assertEquals(PaymentStatus.REJECTED.name(), payment.getStatus());
         assertEquals(OrderStatus.FAILED.name(), order.getStatus());
+        verify(paymentRepository, times(1)).save(any(Payment.class));
+    }
+
+    @Test
+    void testAddPaymentWithEmptyBankTransferDataShouldSetRejected() {
+        Map<String, String> paymentData = Map.of(
+                "bankName", "",
+                "referenceCode", "REF001"
+        );
+
+        Payment payment = paymentService.addPayment(
+                order,
+                PaymentMethod.BANK_TRANSFER.name(),
+                paymentData
+        );
+
+        assertNotNull(payment);
+        assertEquals(PaymentStatus.REJECTED.name(), payment.getStatus());
+        assertEquals(OrderStatus.FAILED.name(), order.getStatus());
+        verify(paymentRepository, times(1)).save(any(Payment.class));
+    }
+
+    @Test
+    void testAddPaymentWithValidBankTransferDataShouldSetSuccess() {
+        Map<String, String> paymentData = Map.of(
+                "bankName", "BCA",
+                "referenceCode", "REF001"
+        );
+
+        Payment payment = paymentService.addPayment(
+                order,
+                PaymentMethod.BANK_TRANSFER.name(),
+                paymentData
+        );
+
+        assertNotNull(payment);
+        assertEquals(PaymentStatus.SUCCESS.name(), payment.getStatus());
+        assertEquals(OrderStatus.SUCCESS.name(), order.getStatus());
         verify(paymentRepository, times(1)).save(any(Payment.class));
     }
 
@@ -114,40 +160,4 @@ class PaymentServiceImplTest {
         assertEquals(PaymentStatus.SUCCESS.name(), payment.getStatus());
         assertEquals(OrderStatus.SUCCESS.name(), order.getStatus());
     }
-
-    @Test
-    void testAddPaymentWithEmptyBankTransferDataShouldSetRejected() {
-        Map<String, String> paymentData = Map.of(
-                "bankName", "",
-                "referenceCode", "REF001"
-        );
-
-        Payment payment = paymentService.addPayment(
-                order,
-                PaymentMethod.BANK_TRANSFER.name(),
-                paymentData
-        );
-
-        assertEquals(PaymentStatus.REJECTED.name(), payment.getStatus());
-        assertEquals(OrderStatus.FAILED.name(), order.getStatus());
-    }
-
-    @Test
-    void testAddPaymentWithValidBankTransferDataShouldSetSuccess() {
-        Map<String, String> paymentData = Map.of(
-                "bankName", "BCA",
-                "referenceCode", "REF001"
-        );
-
-        Payment payment = paymentService.addPayment(
-                order,
-                PaymentMethod.BANK_TRANSFER.name(),
-                paymentData
-        );
-
-        assertEquals(PaymentStatus.SUCCESS.name(), payment.getStatus());
-        assertEquals(OrderStatus.SUCCESS.name(), order.getStatus());
-    }
-
-
 }
